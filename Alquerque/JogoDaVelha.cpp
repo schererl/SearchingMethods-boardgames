@@ -1,10 +1,17 @@
 #include "JogoDaVelha.h"
 
+JogoDaVelha::JogoDaVelha(int number_pieces)
+{
+    pieces_left[-1] = number_pieces;
+    pieces_left[1] = number_pieces;
+}
+
 vector<Movement> JogoDaVelha::possibleMoves(Tabuleiro& alquerque, const Player &mark)
 {
     vector<Movement> possibleMovements;
     
-    if((mark == 1 && current_state_p1 == INSERT) || (mark == -1 && current_state_p2 == INSERT))
+    int p_left = pieces_left.find(mark)->second;
+    if(p_left > 0)
     { 
         //            check insertion
         vector<Position> freeSpaces = alquerque.availablePositions();
@@ -48,23 +55,13 @@ bool JogoDaVelha::makeMove(Tabuleiro& alquerque, Movement &movement)
     
     if (ac == INSERTION_PIECE) {
         alquerque.insertPiece(end, mark);
-        
-        if (mark == 1) 
-        {
-            pieces_left_p1 -= 1;
-           // if (pieces_left_p1 == 0) current_state_p1 = MOVE;
-        }
-        else
-        {
-            pieces_left_p2 -= 1;
-           // if (pieces_left_p2 == 0) current_state_p2 = MOVE;
-        }
+        pieces_left[mark] -= 1;
     }
     else if (ac == MOVE_PIECE) {
         alquerque.movePiece(start, end, mark);
     }
 
-    move_pile.push(movement); //verificar se operador= funciona (acho q n)
+    move_pile.push(movement); 
 
     return false;
 }
@@ -78,20 +75,13 @@ void JogoDaVelha::UndoMove(Tabuleiro &alquerque)
     Position start = get<1>(_last_movement);
     Position end = get<2>(_last_movement);
     Action ac = get<3>(_last_movement);
+
+    
+
     if (ac == INSERTION_PIECE) 
     {
         alquerque.state_[get<0>(end)][get<1>(end)] = 0;
-        
-        if (mark == 1) //undo insertion: add player left
-        {
-            pieces_left_p1 += 1;
-            // if (pieces_left_p1 > 0 && current_state_p1 == MOVE) current_state_p1 = INSERT;
-        }
-        else
-        {
-            pieces_left_p2 += 1;
-            //if (pieces_left_p2 > 0 && current_state_p2 == MOVE) current_state_p2 = INSERT;
-        }
+        pieces_left[mark] += 1;
     }
     else if (ac == MOVE_PIECE) 
     {
@@ -107,11 +97,11 @@ void JogoDaVelha::UndoMove(Tabuleiro &alquerque)
 
 bool JogoDaVelha::checkGameOver(const Tabuleiro& alquerque)
 {
-    //* talvez precise verificar qual ação foi executada
+    //* talvez precise verificar qual aÃ§Ã£o foi executada
     return false;
 
     Movement _last_movement = move_pile.top();
-    // pegar finalPosition do último movimento do jogo para saber a posição da última peça movida 
+    // pegar finalPosition do Ãºltimo movimento do jogo para saber a posiÃ§Ã£o da Ãºltima peÃ§a movida 
     int line = get<0>(get<2>(_last_movement));
     int column = get<1>(get<2>(_last_movement));
     int mark = get<0>(_last_movement);
@@ -130,12 +120,12 @@ bool JogoDaVelha::checkGameOver(const Tabuleiro& alquerque)
         if (alquerque.existPlayerAt(i, column, mark) && alquerque.existPlayerAt(i + 1, column, mark)) { columnSequence++; }
         //diagonal princial
         if (alquerque.existPlayerAt(i, i, mark) && alquerque.existPlayerAt(i + 1, i + 1, mark)) { dpSequence++; }
-        //diagonal secundária
+        //diagonal secundÃ¡ria
         if (alquerque.existPlayerAt(i, 4 - i, mark) && alquerque.existPlayerAt(i + 1, 4 - (i + 1), mark)) { dsSequence++; }
     }
 
     
-    //verificar se existe alinhamento de alguma peça em alguma diagonal válida
+    //verificar se existe alinhamento de alguma peÃ§a em alguma diagonal vÃ¡lida
     //digonais menores
     bool sd0 = alquerque.existPlayerAt(0, 1, mark) &&  alquerque.existPlayerAt(1, 2, mark) &&  alquerque.existPlayerAt(3, 4, mark) && alquerque.existPlayerAt(2, 3, mark);
     bool sd1 = alquerque.existPlayerAt(1, 0, mark) &&  alquerque.existPlayerAt(2, 1, mark) &&  alquerque.existPlayerAt(3, 2, mark) && alquerque.existPlayerAt(4, 3, mark);
